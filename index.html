@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기업 뉴스 모니터링</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    body{background:#f2f2f2;color:#111}
+    .topbar{background:#fff;border-bottom:1px solid #e8e8e8;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .topbar-title{font-size:14px;font-weight:600;letter-spacing:-0.3px}
+    .topbar-right{display:flex;gap:8px;align-items:center}
+    .upd-txt{font-size:11px;color:#bbb}
+    .btn{font-size:12px;padding:5px 13px;border-radius:7px;border:1px solid #e0e0e0;background:#fff;cursor:pointer;color:#333}
+    .btn:hover{background:#f5f5f5}
+    .btn-set{background:#f0f0f0;border-color:#e0e0e0}
+    .tab-row{background:#fff;display:flex;overflow-x:auto;border-bottom:1px solid #e8e8e8;padding:0 16px;scrollbar-width:none;position:sticky;top:44px;z-index:9}
+    .tab-row::-webkit-scrollbar{display:none}
+    .tab{padding:9px 14px;font-size:12px;color:#999;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+    .tab.active{color:#111;font-weight:500;border-bottom-color:#111}
+    .search-row{background:#fff;padding:9px 16px;border-bottom:1px solid #e8e8e8}
+    .search-input{width:100%;font-size:13px;padding:7px 12px;border:1px solid #e8e8e8;border-radius:7px;background:#fafafa;color:#111}
+    .search-input:focus{outline:none;border-color:#bbb}
+    .count-bar{padding:7px 16px;font-size:11px;color:#bbb;background:#f2f2f2}
+    .news-area{padding:0 14px 20px;display:flex;flex-direction:column;gap:1px}
+    .news-card{background:#fff;padding:11px 14px;cursor:pointer;display:block;text-decoration:none}
+    .news-card:first-child{margin-top:8px;border-radius:10px 10px 0 0}
+    .news-card:last-child{border-radius:0 0 10px 10px}
+    .news-card:only-child{border-radius:10px;margin-top:8px}
+    .news-card:hover{background:#fafafa}
+    .card-top{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+    .co-tag{font-size:11px;font-weight:600;color:#555;background:#efefef;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+    .news-title{font-size:13px;font-weight:500;color:#111;line-height:1.45;flex:1}
+    .card-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+    .source-txt{font-size:11px;color:#bbb}
+    .dot{font-size:11px;color:#ddd}
+    .date-txt{font-size:11px;color:#bbb}
+    .ago-txt{font-size:11px;color:#ccc}
+    .summary-toggle{font-size:11px;color:#aaa;margin-top:4px;display:flex;align-items:center;gap:4px;user-select:none}
+    .summary-toggle:hover{color:#888}
+    .chevron{display:inline-block;transition:transform 0.2s;font-size:9px}
+    .chevron.open{transform:rotate(180deg)}
+    .summary-box{display:none;margin-top:7px;padding:8px 10px;background:#f7f7f7;border-radius:6px;font-size:12px;color:#555;line-height:1.65;border-left:2px solid #e0e0e0}
+    .summary-box.open{display:block}
+    .empty{text-align:center;padding:3rem;color:#bbb;font-size:13px;background:#fff;border-radius:10px;margin-top:8px}
+    .loading{text-align:center;padding:3rem;color:#bbb;font-size:13px;background:#fff;border-radius:10px;margin-top:8px}
+    .err{text-align:center;padding:2rem;color:#e53e3e;font-size:13px;background:#fff;border-radius:10px;margin-top:8px;line-height:1.6}
+
+    .panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:100;justify-content:flex-end}
+    .panel-overlay.open{display:flex}
+    .panel{background:#fff;width:300px;height:100vh;overflow-y:auto;border-left:1px solid #e8e8e8;display:flex;flex-direction:column}
+    .panel-header{padding:12px 16px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+    .panel-title{font-size:13px;font-weight:600}
+    .close-btn{font-size:20px;cursor:pointer;color:#aaa;background:none;border:none;line-height:1}
+    .panel-body{padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:12px}
+    .group-block{border:1px solid #ebebeb;border-radius:10px;overflow:hidden}
+    .group-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fafafa;border-bottom:1px solid #ebebeb}
+    .grp-inp{font-size:12px;font-weight:600;background:transparent;border:none;flex:1;color:#111}
+    .grp-inp:focus{outline:none}
+    .del-grp{font-size:11px;color:#e53e3e;cursor:pointer;background:none;border:none;padding:0}
+    .co-list{padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+    .co-row{display:flex;align-items:center;gap:6px}
+    .co-inp{flex:1;font-size:12px;padding:4px 8px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;color:#111}
+    .co-inp:focus{outline:none;border-color:#bbb}
+    .del-co{font-size:15px;cursor:pointer;color:#ccc;background:none;border:none;line-height:1}
+    .add-co{font-size:12px;color:#888;cursor:pointer;background:none;border:none;padding:2px 0;text-align:left}
+    .add-grp{font-size:12px;color:#888;cursor:pointer;background:none;border:1px dashed #ddd;border-radius:10px;padding:9px;text-align:center;width:100%}
+    .panel-footer{padding:12px 16px;border-top:1px solid #e8e8e8;display:flex;gap:8px;position:sticky;bottom:0;background:#fff}
+    .panel-footer button{flex:1}
+    .pf-save{background:#111;color:#fff;border-color:#111}
+    .pf-save:hover{background:#333}
+  </style>
+</head>
+<body>
+
+<div id="main-view">
+  <div class="topbar">
+    <span class="topbar-title">뉴스 모니터링</span>
+    <div class="topbar-right">
+      <span class="upd-txt" id="upd-txt">-</span>
+      <button class="btn" onclick="loadNews()">새로고침</button>
+      <button class="btn btn-set" onclick="openPanel()">기업 설정</button>
+    </div>
+  </div>
+  <div class="tab-row" id="tab-row"></div>
+  <div class="search-row">
+    <input class="search-input" id="search" placeholder="기사 검색..." oninput="render()">
+  </div>
+  <div class="count-bar" id="count-bar"></div>
+  <div class="news-area" id="news-area"><div class="loading">뉴스를 불러오는 중...</div></div>
+</div>
+
+<div class="panel-overlay" id="panel-overlay">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">기업 설정</span>
+      <button class="close-btn" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+    <div class="panel-footer">
+      <button class="btn" onclick="closePanel()">취소</button>
+      <button class="btn pf-save" onclick="savePanel()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:5000";
+
+const STOCK_KW = ['주가','코스피','코스닥','상한가','하한가','52주','목표주가','투자의견','매수','매도','주식','시가총액','외국인 순매','기관 순매','증권사','리포트','컨센서스','주당순이익','배당수익','EPS','PER','PBR','수급','선물','옵션','공매도'];
+
+let groups = [
+  {id:'all',  name:'전체',       companies:[]},
+  {id:'grp1', name:'삼성그룹',   companies:['삼성전자','삼성물산','삼성SDI','삼성생명','삼성바이오로직스']},
+  {id:'grp2', name:'SK그룹',     companies:['SK하이닉스','SK이노베이션','SK텔레콤','SKC']},
+  {id:'grp3', name:'현대차그룹', companies:['현대차','기아','현대모비스','현대제철']},
+  {id:'grp4', name:'LG그룹',     companies:['LG화학','LG에너지솔루션','LG전자','LG유플러스']},
+  {id:'grp5', name:'모니터링',   companies:['카카오','네이버','농심홀딩스','POSCO홀딩스','CJ제일제당']},
+];
+
+let activeTab = 'all';
+let allNews = {};
+let editGroups = [];
+
+function allCompanies(){
+  return [...new Set(groups.filter(g=>g.id!=='all').flatMap(g=>g.companies))];
+}
+
+function isStock(title){
+  return STOCK_KW.some(k=>title.includes(k));
+}
+
+function dedup(list){
+  const seen=[];
+  return list.filter(n=>{
+    const key=n.title.replace(/[^\w가-힣]/g,'').slice(0,18);
+    if(seen.includes(key)) return false;
+    seen.push(key);
+    return true;
+  });
+}
+
+function formatDate(pubDate){
+  const d=new Date(pubDate);
+  const now=new Date();
+  const diff=Math.floor((now-d)/60000);
+  const yyyy=d.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  const hh=String(d.getHours()).padStart(2,'0');
+  const mi=String(d.getMinutes()).padStart(2,'0');
+  const dateStr=`${yyyy}.${mm}.${dd} ${hh}:${mi}`;
+  let agoStr='';
+  if(diff<1) agoStr='방금 전';
+  else if(diff<60) agoStr=`${diff}분 전`;
+  else if(diff<1440) agoStr=`${Math.floor(diff/60)}시간 전`;
+  else agoStr=`${Math.floor(diff/1440)}일 전`;
+  return {dateStr, agoStr};
+}
+
+function getHostname(url){
+  try{ return new URL(url).hostname.replace('www.',''); }
+  catch(e){ return url; }
+}
+
+async function loadNews(){
+  document.getElementById('news-area').innerHTML='<div class="loading">뉴스를 불러오는 중...</div>';
+  document.getElementById('upd-txt').textContent='불러오는 중...';
+  const companies=allCompanies();
+  const params=companies.map(c=>`companies=${encodeURIComponent(c)}`).join('&');
+  try{
+    const res=await fetch(`${API_BASE}/api/news?${params}&display=10`);
+    allNews=await res.json();
+    const now=new Date();
+    document.getElementById('upd-txt').textContent=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} 업데이트`;
+    render();
+  } catch(e){
+    document.getElementById('news-area').innerHTML='<div class="err">서버 연결 실패<br><span style="font-size:11px;color:#aaa">PowerShell에서 python app.py 실행 후 새로고침</span></div>';
+    document.getElementById('upd-txt').textContent='연결 실패';
+  }
+}
+
+function getNewsList(){
+  const cos = activeTab==='all'
+    ? allCompanies()
+    : (groups.find(g=>g.id===activeTab)?.companies||[]);
+  const q=document.getElementById('search').value.toLowerCase();
+  let list=[];
+  for(const co of cos){
+    for(const item of (allNews[co]||[])){
+      if(!isStock(item.title)) list.push({...item, company:co});
+    }
+  }
+  list=dedup(list);
+  list.sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+  if(q) list=list.filter(n=>n.title.toLowerCase().includes(q)||n.company.toLowerCase().includes(q)||n.description.toLowerCase().includes(q));
+  return list;
+}
+
+function renderTabs(){
+  const row=document.getElementById('tab-row');
+  row.innerHTML=groups.map(g=>{
+    const cos=g.id==='all'?allCompanies():(g.companies||[]);
+    let cnt=0;
+    for(const co of cos) cnt+=(allNews[co]||[]).filter(n=>!isStock(n.title)).length;
+    return `<div class="tab${g.id===activeTab?' active':''}" onclick="setTab('${g.id}')">${g.name}<span style="font-size:10px;color:#ccc;margin-left:4px">${cnt}</span></div>`;
+  }).join('');
+}
+
+function toggleSummary(id){
+  const box=document.getElementById('sum-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const tog=document.getElementById('tog-'+id);
+  if(box.classList.contains('open')){
+    box.classList.remove('open');
+    chev.classList.remove('open');
+    tog.textContent='요약 보기 ';
+    tog.appendChild(chev);
+  } else {
+    box.classList.add('open');
+    chev.classList.add('open');
+    tog.textContent='요약 접기 ';
+    tog.appendChild(chev);
+  }
+}
+
+function render(){
+  renderTabs();
+  const list=getNewsList();
+  const total=Object.values(allNews).flat().length;
+  const filtered=total-list.length;
+  document.getElementById('count-bar').textContent=`${list.length}건 표시 중${filtered>0?' · 주가/중복 '+filtered+'건 자동 제외':''}`;
+  const area=document.getElementById('news-area');
+  if(!Object.keys(allNews).length) return;
+  if(!list.length){area.innerHTML='<div class="empty">뉴스가 없습니다.</div>';return;}
+  area.innerHTML=list.map((n,i)=>{
+    const {dateStr,agoStr}=formatDate(n.pubDate);
+    const src=getHostname(n.source||n.link||'');
+    const desc=(n.description||'').replace(/<[^>]+>/g,'').trim();
+    return `<div class="news-card">
+      <a href="${n.link}" target="_blank" style="text-decoration:none;color:inherit">
+        <div class="card-top">
+          <span class="co-tag">${n.company}</span>
+          <span class="news-title">${n.title}</span>
+        </div>
+        <div class="card-meta">
+          <span class="source-txt">${src}</span>
+          <span class="dot">·</span>
+          <span class="date-txt">${dateStr}</span>
+          <span class="dot">·</span>
+          <span class="ago-txt">${agoStr}</span>
+        </div>
+      </a>
+      ${desc?`
+      <div class="summary-toggle" id="tog-${i}" onclick="toggleSummary(${i})">
+        요약 보기 <span class="chevron" id="chev-${i}">▼</span>
+      </div>
+      <div class="summary-box" id="sum-${i}">${desc}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function setTab(id){activeTab=id;render();}
+
+function openPanel(){
+  editGroups=JSON.parse(JSON.stringify(groups.filter(g=>g.id!=='all')));
+  renderPanel();
+  document.getElementById('panel-overlay').classList.add('open');
+}
+function closePanel(){document.getElementById('panel-overlay').classList.remove('open');}
+function savePanel(){
+  groups=[{id:'all',name:'전체',companies:[]},...editGroups];
+  closePanel();
+  loadNews();
+}
+function renderPanel(){
+  document.getElementById('panel-body').innerHTML=
+    editGroups.map((g,gi)=>`
+      <div class="group-block">
+        <div class="group-hd">
+          <input class="grp-inp" value="${g.name}" onchange="editGroups[${gi}].name=this.value">
+          <button class="del-grp" onclick="delGroup(${gi})">삭제</button>
+        </div>
+        <div class="co-list">
+          ${g.companies.map((c,ci)=>`
+            <div class="co-row">
+              <input class="co-inp" value="${c}" onchange="editGroups[${gi}].companies[${ci}]=this.value">
+              <button class="del-co" onclick="delCompany(${gi},${ci})">×</button>
+            </div>`).join('')}
+          <button class="add-co" onclick="addCompany(${gi})">+ 추가</button>
+        </div>
+      </div>`).join('')+
+    `<button class="add-grp" onclick="addGroup()">+ 그룹 추가</button>`;
+}
+function addGroup(){editGroups.push({id:'g'+Date.now(),name:'새 그룹',companies:[]});renderPanel();}
+function delGroup(gi){editGroups.splice(gi,1);renderPanel();}
+function addCompany(gi){editGroups[gi].companies.push('');renderPanel();}
+function delCompany(gi,ci){editGroups[gi].companies.splice(ci,1);renderPanel();}
+
+loadNews();
+setInterval(loadNews, 5*60*1000);
+</script>
+</body>
+</html>
