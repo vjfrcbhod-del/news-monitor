@@ -67,7 +67,7 @@ def convert(src, dst, title):
     d.save(dst); return dst
 
 for src, dst, title in [
-    ("00_skeleton_research.md", "00_뼈대_및_리서치정리.docx", "엔젤로보틱스 CB/CPS IM — 뼈대 및 리서치 정리"),
-    ("01_content_plan.md",      "01_소제목별_집필계획.docx",   "엔젤로보틱스 CB/CPS IM — 소제목별 집필 계획"),
+    ("00_skeleton_research.md", "00_skeleton_research.docx", "엔젤로보틱스 CB/CPS IM — 뼈대 및 리서치 정리"),
+    ("01_content_plan.md",      "01_content_plan.docx",   "엔젤로보틱스 CB/CPS IM — 소제목별 집필 계획"),
 ]:
     print("saved:", convert(src, dst, title))
