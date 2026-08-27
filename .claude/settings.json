@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude plugin list 2>/dev/null | grep -q 'eli5@claude-community' || { claude plugin marketplace add anthropics/claude-plugins-community >/dev/null 2>&1; claude plugin install eli5@claude-community >/dev/null 2>&1; }; exit 0",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}
